@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class PlayerManager : MonoBehaviour
 {
+    // ゲームマネージャー
+    public GameObject gameManager;
+    
     // ブロックレイヤー
     public LayerMask blockLayer;
     
@@ -94,6 +97,54 @@ public class PlayerManager : MonoBehaviour
             rbody.AddForce(Vector2.up * jumpPower);
             goJump = false;
         }
+    }
+    
+    
+    // 衝突処理
+    void OnTriggerEnter2D(Collider2D col)
+    {
+        // プレイ中でなければ接触判定を行わない
+        if(gameManager.GetComponent<GameManager>().gameMode != GameManager.GAME_MODE.PLAY){
+            return;
+        }
+        
+        // トラップに当たった時
+        if(col.gameObject.tag == "Trap"){
+            gameManager.GetComponent<GameManager>().GameOver();
+            DestroyPlayer();
+        }
+        
+        // ゴールした時
+        if(col.gameObject.tag == "Goal"){
+            gameManager.GetComponent<GameManager>().GameClear();
+        }
+        
+        // 敵に当たった時
+        if(col.gameObject.tag == "Enemy"){
+            // 敵を上から踏んだ場合
+            if(transform.position.y > col.gameObject.transform.position.y + 0.4f){
+                rbody.velocity = new Vector2(rbody.velocity.x, 0);
+                rbody.AddForce(Vector2.up * jumpPower);
+                col.gameObject.GetComponent<EnemyManager>() .DestroyEnemy();
+            }
+            // 横から当たった場合
+            else{
+                gameManager.GetComponent<GameManager>().GameOver();
+                DestroyPlayer();
+            }
+        }
+        
+        // オーブに当たった時
+        if(col.gameObject.tag == "Orb"){
+            col.gameObject.GetComponent<OrbManager>().GetOrb();
+        }
+    }
+    
+    
+    // プレイヤーオブジェクト削除処理
+    void DestroyPlayer()
+    {
+        Destroy(this.gameObject);
     }
     
     
